@@ -3,7 +3,6 @@ import 'dart:convert';
 
 const int updateTimeout = 300;
 const int pollInterval = 1;
-
 late File logFile;
 late File lockFile;
 

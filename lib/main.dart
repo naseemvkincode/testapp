@@ -34,7 +34,7 @@ class TestAppHomePage extends StatefulWidget {
 }
 
 class _TestAppHomePageState extends State<TestAppHomePage> {
-  static const String currentVersion = '1.0.0';
+  static const String currentVersion = '1.1.0';
 
   String status = 'Ready';
   bool isUpdating = false;

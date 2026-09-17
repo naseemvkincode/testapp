@@ -4,10 +4,10 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{CDEE29C9-4761-4CEC-B73B-AA6AEE41B628}
+AppId={{77F8FE58-C010-429D-A351-CA42D51F722F}
 AppName=TestApp
-AppVersion=1.0.0
-;AppVerName=TestApp 1.0.0
+AppVersion=1.1.0
+;AppVerName=TestApp 1.1.0
 DefaultDirName={autopf}\TestApp
 UninstallDisplayIcon={app}\TestApp.exe
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
