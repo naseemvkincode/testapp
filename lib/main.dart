@@ -34,7 +34,7 @@ class TestAppHomePage extends StatefulWidget {
 }
 
 class _TestAppHomePageState extends State<TestAppHomePage> {
-  static const String currentVersion = '1.1.0';
+  static const String currentVersion = '1.2.0';
 
   String status = 'Ready';
   bool isUpdating = false;
@@ -94,66 +94,84 @@ class _TestAppHomePageState extends State<TestAppHomePage> {
   }
 
   Future<void> _startDownload(UpdateInfo info) async {
-    Navigator.of(context).pop();
+  Navigator.of(context).pop();
 
-    setState(() {
-      isUpdating = true;
-      status = 'Downloading update...';
-    });
+  setState(() {
+    isUpdating = true;
+    status = 'Downloading update...';
+  });
 
-    try {
-      final installerPath = await UpdateService.downloadInstaller(
-        info,
-        (progress) {
-          if (mounted) {
-            setState(() {
-              status =
-                  'Downloading: ${(progress * 100).toStringAsFixed(0)}%';
-            });
-          }
-        },
-      );
+  try {
+    final installerPath = await UpdateService.downloadInstaller(
+      info,
+      (progress) {
+        if (mounted) {
+          setState(() {
+            status =
+                'Downloading: ${(progress * 100).toStringAsFixed(0)}%';
+          });
+        }
+      },
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (installerPath == null) {
-        setState(() {
-          isUpdating = false;
-          status = 'Download failed';
-        });
-        return;
-      }
-
-      setState(() {
-        status = 'Starting updater...';
-      });
-
-      final updater = File(updaterPath);
-      if (!updater.existsSync()) {
-        setState(() {
-          isUpdating = false;
-          status = 'Updater.exe not found';
-        });
-        return;
-      }
-
-      await Process.start(
-        updater.path,
-        [installerPath, applicationPath],
-        mode: ProcessStartMode.detached,
-        workingDirectory: File(updater.path).parent.path,
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      exit(0);
-    } catch (e) {
-      if (!mounted) return;
+    if (installerPath == null) {
       setState(() {
         isUpdating = false;
-        status = 'Update failed: $e';
+        status = 'Download failed';
       });
+      return;
     }
+
+    final applicationFile = File(applicationPath);
+    final updater = File(updaterPath);
+
+    debugPrint('========== UPDATE DEBUG ==========');
+    debugPrint('Application path: $applicationPath');
+    debugPrint('Application exists: ${applicationFile.existsSync()}');
+    debugPrint('Updater path: $updaterPath');
+    debugPrint('Updater exists: ${updater.existsSync()}');
+    debugPrint('Installer path: $installerPath');
+    debugPrint('Installer exists: ${File(installerPath).existsSync()}');
+    debugPrint('==================================');
+
+    if (!updater.existsSync()) {
+      setState(() {
+        isUpdating = false;
+        status = 'Updater.exe not found:\n$updaterPath';
+      });
+      return;
+    }
+
+    setState(() {
+      status = 'Starting updater...';
+    });
+
+    final process = await Process.start(
+      updater.path,
+      [installerPath, applicationPath],
+      mode: ProcessStartMode.detached,
+      workingDirectory: updater.parent.path,
+    );
+
+    debugPrint('Updater started successfully. PID: ${process.pid}');
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    exit(0);
+  } catch (e, stackTrace) {
+    debugPrint('UPDATE ERROR: $e');
+    debugPrint('$stackTrace');
+
+    if (!mounted) return;
+
+    setState(() {
+      isUpdating = false;
+      status = 'Update failed: $e';
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

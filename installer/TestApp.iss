@@ -4,10 +4,10 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{CDEE29C9-4761-4CEC-B73B-AA6AEE41B628}
+AppId={{05030232-5A51-47E0-9B1B-467ECFCA679E}
 AppName=TestApp
-AppVersion=1.0.0
-;AppVerName=TestApp 1.0.0
+AppVersion=1.2.0
+;AppVerName=TestApp 1.2.0
 DefaultDirName={autopf}\TestApp
 UninstallDisplayIcon={app}\TestApp.exe
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
@@ -37,6 +37,7 @@ Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\TestApp.exe"; De
 Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "C:\Vikn codes\testapp\Updater.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\TestApp"; Filename: "{app}\TestApp.exe"
