@@ -4,10 +4,10 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{3B2D9118-6911-4B36-971C-5994638297E8}
+AppId={{7F91BD6B-DAFC-43ED-A158-10E3B4FFEB96}
 AppName=TestApp
-AppVersion=1.2.0
-;AppVerName=TestApp 1.2.0
+AppVersion=1.8.0
+;AppVerName=TestApp 1.8.0
 DefaultDirName={autopf}\TestApp
 UninstallDisplayIcon={app}\TestApp.exe
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
@@ -18,6 +18,7 @@ ArchitecturesAllowed=x64compatible
 ; meaning it should use the native 64-bit Program Files directory and
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
+ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
@@ -37,6 +38,13 @@ Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\TestApp.exe"; De
 Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Vikn codes\testapp\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "C:\Vikn codes\testapp\updater\updater.exe"; DestDir: "{app}"; Flags: ignoreversion
+
+[Registry]
+Root: HKA; Subkey: "Software\Classes\.myp\OpenWithProgids"; ValueType: string; ValueName: "TestAppFile.myp"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\TestAppFile.myp"; ValueType: string; ValueName: ""; ValueData: "TestApp File"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\TestAppFile.myp\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\TestApp.exe,0"
+Root: HKA; Subkey: "Software\Classes\TestAppFile.myp\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\TestApp.exe"" ""%1"""
 
 [Icons]
 Name: "{autoprograms}\TestApp"; Filename: "{app}\TestApp.exe"
