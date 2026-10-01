@@ -34,7 +34,7 @@ class TestAppHomePage extends StatefulWidget {
 }
 
 class _TestAppHomePageState extends State<TestAppHomePage> {
-  static const String currentVersion = '1.8.0';
+  static const String currentVersion = '1.3.0';
 
   String status = 'Ready';
   bool isUpdating = false;
@@ -74,6 +74,7 @@ class _TestAppHomePageState extends State<TestAppHomePage> {
       _showUpdateDialog(info);
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         isCheckingUpdate = false;
         status = 'Update check failed';
@@ -94,84 +95,117 @@ class _TestAppHomePageState extends State<TestAppHomePage> {
   }
 
   Future<void> _startDownload(UpdateInfo info) async {
-  Navigator.of(context).pop();
-
-  setState(() {
-    isUpdating = true;
-    status = 'Downloading update...';
-  });
-
-  try {
-    final installerPath = await UpdateService.downloadInstaller(
-      info,
-      (progress) {
-        if (mounted) {
-          setState(() {
-            status =
-                'Downloading: ${(progress * 100).toStringAsFixed(0)}%';
-          });
-        }
-      },
-    );
-
-    if (!mounted) return;
-
-    if (installerPath == null) {
-      setState(() {
-        isUpdating = false;
-        status = 'Download failed';
-      });
-      return;
-    }
-
-    final applicationFile = File(applicationPath);
-    final updater = File(updaterPath);
-
-    debugPrint('========== UPDATE DEBUG ==========');
-    debugPrint('Application path: $applicationPath');
-    debugPrint('Application exists: ${applicationFile.existsSync()}');
-    debugPrint('Updater path: $updaterPath');
-    debugPrint('Updater exists: ${updater.existsSync()}');
-    debugPrint('Installer path: $installerPath');
-    debugPrint('Installer exists: ${File(installerPath).existsSync()}');
-    debugPrint('==================================');
-
-    if (!updater.existsSync()) {
-      setState(() {
-        isUpdating = false;
-        status = 'Updater.exe not found:\n$updaterPath';
-      });
-      return;
-    }
+    Navigator.of(context).pop();
 
     setState(() {
-      status = 'Starting updater...';
+      isUpdating = true;
+      status = 'Downloading update...';
     });
 
-    final process = await Process.start(
-      updater.path,
-      [installerPath, applicationPath],
-      mode: ProcessStartMode.detached,
-      workingDirectory: updater.parent.path,
-    );
+    try {
+      final installerPath = await UpdateService.downloadInstaller(
+        info,
+        (progress) {
+          if (mounted) {
+            setState(() {
+              status =
+                  'Downloading: ${(progress * 100).toStringAsFixed(0)}%';
+            });
+          }
+        },
+      );
 
-    debugPrint('Updater started successfully. PID: ${process.pid}');
+      if (!mounted) return;
 
-    await Future.delayed(const Duration(milliseconds: 500));
+      if (installerPath == null) {
+        setState(() {
+          isUpdating = false;
+          status = 'Download failed';
+        });
+        return;
+      }
 
-    exit(0);
-  } catch (e, stackTrace) {
-    debugPrint('UPDATE ERROR: $e');
-    debugPrint('$stackTrace');
+      final applicationFile = File(applicationPath);
+      final updater = File(updaterPath);
+      final installerFile = File(installerPath);
 
-    if (!mounted) return;
+      debugPrint('========== UPDATE DEBUG ==========');
+      debugPrint('Application path: $applicationPath');
+      debugPrint(
+        'Application exists: ${applicationFile.existsSync()}',
+      );
+      debugPrint('Updater path: $updaterPath');
+      debugPrint('Updater exists: ${updater.existsSync()}');
+      debugPrint('Installer path: $installerPath');
+      debugPrint(
+        'Installer exists: ${installerFile.existsSync()}',
+      );
+      debugPrint('Expected version: ${info.latestVersion}');
+      debugPrint('==================================');
 
-    setState(() {
-      isUpdating = false;
-      status = 'Update failed: $e';
-    });
+      if (!applicationFile.existsSync()) {
+        setState(() {
+          isUpdating = false;
+          status = 'Application.exe not found:\n$applicationPath';
+        });
+        return;
+      }
+
+      if (!installerFile.existsSync()) {
+        setState(() {
+          isUpdating = false;
+          status = 'Installer not found:\n$installerPath';
+        });
+        return;
+      }
+
+      if (!updater.existsSync()) {
+        setState(() {
+          isUpdating = false;
+          status = 'Updater.exe not found:\n$updaterPath';
+        });
+        return;
+      }
+
+      setState(() {
+        status = 'Starting updater...';
+      });
+
+      // Updater requires exactly 3 arguments:
+      // 1. Installer path
+      // 2. TestApp.exe path
+      // 3. Expected new version
+      final process = await Process.start(
+        updater.path,
+        [
+          installerPath,
+          applicationPath,
+          info.latestVersion,
+        ],
+        mode: ProcessStartMode.detached,
+        workingDirectory: updater.parent.path,
+      );
+
+      debugPrint(
+        'Updater started successfully. PID: ${process.pid}',
+      );
+
+      // Give the updater enough time to start before closing this app.
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      exit(0);
+    } catch (e, stackTrace) {
+      debugPrint('UPDATE ERROR: $e');
+      debugPrint('$stackTrace');
+
+      if (!mounted) return;
+
+      setState(() {
+        isUpdating = false;
+        status = 'Update failed: $e';
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +260,9 @@ class _TestAppHomePageState extends State<TestAppHomePage> {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
                             )
                           : const Icon(Icons.cloud_download),
                       label: Text(
@@ -256,14 +292,26 @@ class _TestAppHomePageState extends State<TestAppHomePage> {
   }
 
   Color _statusColor() {
-    if (status.contains('up to date')) return Colors.green;
-    if (status.contains('Update available')) return Colors.orange;
-    if (status.contains('failed') || status.contains('not found')) {
+    if (status.contains('up to date')) {
+      return Colors.green;
+    }
+
+    if (status.contains('Update available')) {
+      return Colors.orange;
+    }
+
+    if (status.contains('failed') ||
+        status.contains('not found') ||
+        status.contains('failed')) {
       return Colors.red;
     }
-    if (status.contains('Downloading') || status.contains('Checking')) {
+
+    if (status.contains('Downloading') ||
+        status.contains('Checking') ||
+        status.contains('Starting updater')) {
       return Colors.blue;
     }
+
     return Colors.black87;
   }
 }
@@ -282,7 +330,10 @@ class _UpdateDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: const Icon(Icons.system_update, size: 48),
+      icon: const Icon(
+        Icons.system_update,
+        size: 48,
+      ),
       title: const Text('Update Available'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -291,20 +342,30 @@ class _UpdateDialog extends StatelessWidget {
           Row(
             children: [
               const Text('Current: '),
-              Text(currentVersion,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                currentVersion,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const Text(' → '),
-              Text(info.latestVersion,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  )),
+              Text(
+                info.latestVersion,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
             ],
           ),
           if (info.releaseNotes.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Text('Release Notes:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Release Notes:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(info.releaseNotes),
           ],

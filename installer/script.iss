@@ -6,8 +6,8 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{7F91BD6B-DAFC-43ED-A158-10E3B4FFEB96}
 AppName=TestApp
-AppVersion=1.8.0
-;AppVerName=TestApp 1.8.0
+AppVersion=1.3.0
+;AppVerName=TestApp 1.3.0
 DefaultDirName={autopf}\TestApp
 UninstallDisplayIcon={app}\TestApp.exe
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
